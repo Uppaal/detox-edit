@@ -24,8 +24,8 @@ This repository contains the code for the paper "DeTox: Toxic Subspace Projectio
      - `pref_data_dps`: How many datapoints to use for calculating the preference matrices
      - `centering`: If True, the preference matrix is projected away from the first singular vector of the preferred embeddings
   - Edit configurations:
-    - `edit_keys`: If True, edits the keys of the attention heads
-    - `edit_values`: If True, edits the values of the attention heads
+    - `edit_keys`: If True, edits the keys of the MLP layer (not recommended, does not reduce toxicity)
+    - `edit_values`: If True, edits the values of the MLP layer
     - `lowest_layer_to_edit`: The lowest layer to edit (zero indexed). If -1, all layers are edited
     - `highest_layer_to_edit`: The highest layer to edit. If -1, all layers are edited
   - Evaluation configurations:
