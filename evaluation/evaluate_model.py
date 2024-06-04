@@ -9,8 +9,8 @@ from utils.model_utils import get_model_max_len
 
 
 filenames = {
-    'toxicity': os.path.join(os.environ["DATASET_DIR"], 'challenge_prompts.jsonl'),
-    'wiki': os.path.join(os.environ["DATASET_DIR"], 'wiki_samples.jsonl')
+    'toxicity': os.path.join(os.environ["DATASET_DIR"], 'evaluation', 'challenge_prompts.jsonl'),
+    'wiki': os.path.join(os.environ["DATASET_DIR"], 'evaluation' ,'wiki_samples.jsonl')
 }
 
 
