@@ -52,7 +52,7 @@ If you find our work useful, please cite our paper:
 ````
 @article{uppaal2024detox,
   title={DeTox: Toxic Subspace Projection for Model Editing},
-  author={Uppaal, Rheeya and De, Apratim and He, Yiting and Zhong, Yiquao and Hu, Junjie},
+  author={Uppaal, Rheeya and Dey, Apratim and He, Yiting and Zhong, Yiqiao and Hu, Junjie},
   journal={arXiv preprint arXiv:2405.13967},
   year={2024}
 }
