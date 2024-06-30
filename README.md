@@ -1,4 +1,6 @@
-This repository contains the code for the paper "DeTox: Toxic Subspace Projection for Model Editing".
+# Weight Editing for Toxicity Reduction
+
+This repository contains the code for the paper "[DeTox: Toxic Subspace Projection for Model Editing](https://arxiv.org/abs/2405.13967)" (2024).
 
 ### Setup
 
@@ -46,6 +48,16 @@ The script will print the results to the console.
 
 ### Citation
 
+If you find our work useful, please cite our paper:
+````
+@article{uppaal2024detox,
+  title={DeTox: Toxic Subspace Projection for Model Editing},
+  author={Uppaal, Rheeya and De, Apratim and He, Yiting and Zhong, Yiquao and Hu, Junjie},
+  journal={arXiv preprint arXiv:2405.13967},
+  year={2024}
+}
+````
+
 We use the preference and evaluation data from:
 ````
 @article{lee2024mechanistic,
@@ -54,9 +66,4 @@ We use the preference and evaluation data from:
   journal={arXiv preprint arXiv:2401.01967},
   year={2024}
 }
-````
-
-If you find our work useful, please cite our paper:
-````
-TBD.
 ````
