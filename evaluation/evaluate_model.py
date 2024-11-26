@@ -67,8 +67,6 @@ def perplexity(model, encodings):
             neg_log_likelihood = outputs.loss
 
         nlls.append(neg_log_likelihood)
-        if begin_loc % 50 == 0:
-            print('Inermediate PPL = ', torch.exp(torch.stack(nlls).mean()))
 
         prev_end_loc = end_loc
         if end_loc == seq_len:

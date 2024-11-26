@@ -20,8 +20,11 @@
    - Model configurations:
      - `model_name`: Currently supports `gpt2`, `mistral`, `zephyr-sft`, `opt`, `gptj`
      - `save_edited_model`: If True, saves the edited model. 
-     - `save_model_name`: Str 
-     - `hf_token`: Your token for the HuggingFace model hub. Required to access Mistral models.
+     - `save_model_name`: Str
+   - Dataset configurations:
+     - `toxicity_task`: If False, aligns to a harmlesness dataset with multiple preferences, instead of the toxicity preference data.
+     - `harmful_dataset`: Either [`Safe-RLHF`](https://huggingface.co/datasets/PKU-Alignment/PKU-SafeRLHF)  or [`HH-Golden`](https://huggingface.co/datasets/nz/anthropic-hh-golden-rlhf)
+     - `harm_category`: For `Safe-RLHF` dataset only. Specifies which kind of harm preference to edit for.
    - Configurations to find P_toxic:
      - `pref_data_dps`: How many datapoints to use for calculating the preference matrices
      - `centering`: If True, the preference matrix is projected away from the first singular vector of the preferred embeddings
@@ -34,16 +37,32 @@
     - `return_perplexity`: If True, returns the perplexity of the edited model on the data
     - `return_toxicity`: If True, returns the toxicity of the edited model on the data
     - `return_sample_generations`: If True, returns the generations of the edited model on 3 samples
+  - Keys:
+    - `hf_token`: Your token for the HuggingFace model hub. Required to access Mistral models.
+    - `azure_openai_endpoint` and `azure_openai_api_key`: Required to calculate win-rate using GPT-4 Azure services.
 
 - The file `detox.py` contains the edit method. To apply this and evaluate, run the following command:
 ````
-python evaluation/edit_model.py -- config_file <name_of_config_file>
+python baselines/detox_edit.py -- config_file <name_of_config_file>
 ````
 For example, if you want to edit the GPT-2 model, run:
 ````
-python evaluation/edit_model.py --config_file gpt2-medium.ini
+python baselines/detox_edit.py --config_file gpt2-medium.ini
 ````
 The script will print the results to the console.
+
+
+### Running Alternate Baselines
+We compare our method against the following baselines:
+- [DPO](https://arxiv.org/abs/2305.18290)
+- [KTO](https://arxiv.org/abs/2402.01306)
+- [DexPerts](https://aclanthology.org/2021.acl-long.522/)
+- [ToxRev](https://arxiv.org/abs/2310.09573)
+
+For each baseline, we either include our implementation in `baselines/` or use the implementation of the authors. To run a specific baseline, 
+````
+python baselines/<baseline_of_your_choice>.py --config_file <name_of_config_file>
+````
 
 
 ### Citation

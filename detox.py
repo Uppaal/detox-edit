@@ -5,7 +5,6 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
-import json
 import torch
 import logging
 import numpy as np
@@ -13,10 +12,12 @@ from copy import deepcopy
 from utils.model_utils import (project_into_vocabluary, is_key, is_value,
                                get_lm_head, get_last_transformer_layer,
                                get_num_transformer_layers, get_hidden_dim, get_model_category)
+from utils.dataset_utils import load_toxicity_preference, load_hh_golden_preference, load_safe_rlhf_preference
 
 
 class DeToxEdit():
-    def __init__(self, model, tokenizer, pref_data_dps, centering=True, top_k_ranks=2, edit_layer_range=None, random_dps=True):
+    def __init__(self, model, tokenizer, pref_data_dps, centering=True, top_k_ranks=2, edit_layer_range=None, random_dps=True,
+                 toxicity_task=True, harmful_dataset=None, harm_category=None):
 
         self.model = model
         self.model.eval()
@@ -37,43 +38,27 @@ class DeToxEdit():
         else:
             self.edit_layer_range = edit_layer_range
 
+        self.toxicity_task = toxicity_task
+        self.harmful_dataset = harmful_dataset
+        self.harm_category = harm_category
+
 
     def _load_preference_data(self):
         num_dps = self.pref_data_dps
         filedir = os.path.join(os.environ["DATASET_DIR"], 'toxicity_pairwise')
-        filepath = os.path.join(filedir, 'split_0.jsonl')
 
-        if not os.path.exists(filepath):
-            logging.info('Preference data not found. Downloading...')
-            os.makedirs(filedir, exist_ok=True)
-            url = 'https://drive.google.com/file/d/1BmBkhNS4R2z5UwqVu5GhaTvFFeWOJfPC/view?usp=drive_link'
-            os.system(f'gdown --id {url.split("/")[-2]} -O {filedir}/toxicity_pairwise.zip')  # Download file from google drive
-            os.system(f'unzip {filedir}/toxicity_pairwise.zip -d {filedir}')  # Unzip the file
-            os.system(f'rm {filedir}/toxicity_pairwise.zip')  # Delete the zip file
-            os.system(f'mv {filedir}/toxicity_pairwise/* {filedir}')  # Move the files in the subdirectory to the parent directory
-            os.system(f'rm -r {filedir}/toxicity_pairwise')  # Delete the subdirectory
-            assert os.path.exists(filepath), 'Preference data download failed.'
-            logging.info('Done.')
-
-        preferred_data, non_preferred_data = [], []
-        with open(filepath, 'r') as f:
-            for line in f:
-                preferred_data.append(json.loads(line)['unpert_gen_text'])
-                non_preferred_data.append(json.loads(line)['pert_gen_text'])
-
-        if num_dps != -1:  # 4096 points
-            if not self.random_dps:
-                preferred_data = preferred_data[:num_dps]
-                non_preferred_data = non_preferred_data[:num_dps]
-            else:
-                indices = np.random.choice(len(preferred_data), num_dps, replace=False)
-                preferred_data = [preferred_data[i] for i in indices]
-                non_preferred_data = [non_preferred_data[i] for i in indices]
-        logging.info(f'Loaded {len(preferred_data)} preferred and {len(non_preferred_data)} non-preferred samples.')
+        if self.toxicity_task:
+            preferred_data, non_preferred_data = load_toxicity_preference(filedir, num_dps=num_dps, random_dps=self.random_dps)
+        else:
+            assert self.harmful_dataset in ['Safe-RLHF', 'HH-Golden'], \
+                f"harmful_dataset must be one of 'Safe-RLHF', 'HH-Golden' but received {self.harmful_dataset}"
+            if self.harmful_dataset == 'HH-Golden':
+                preferred_data, non_preferred_data = load_hh_golden_preference(num_dps=num_dps, random_dps=self.random_dps)
+            elif self.harmful_dataset == 'Safe-RLHF':
+                preferred_data, non_preferred_data = load_safe_rlhf_preference(self.harm_category, num_dps=num_dps, shuffle=self.random_dps, get_from_end=False)
 
         preferred_inputs = self.tokenizer(preferred_data, return_tensors="pt", padding=True, truncation=True, max_length=128)  # 128, 37
         non_preferred_inputs = self.tokenizer(non_preferred_data, return_tensors="pt", padding=True, truncation=True, max_length=128)  # 128, 37
-
         return preferred_inputs, non_preferred_inputs
 
 

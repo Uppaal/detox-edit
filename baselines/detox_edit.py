@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 import inspect
 import argparse
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -16,9 +17,9 @@ config = main(config_filename=config_filename)
 
 import numpy as np
 from detox import DeToxEdit
-from evaluate_model import evaluate_model
 from utils.model_utils import load_large_model
-
+from evaluation.evaluate_model import evaluate_model
+from evaluation.win_rate import calculate_win_rate
 
 
 # Read configs - finding the toxic subspace
@@ -72,6 +73,18 @@ if save_edited_model:
 
 
 # Evaluate the edited model
-ppl, tox = evaluate_model(edited_model, tokenizer,
-               return_perplexity=return_perplexity, return_toxicity=return_toxicity, display_gen=return_sample_generations)
-print(f'{model_id} - Perplexity: {ppl}, Toxicity: {tox}')
+# When editing for toxicity, we measure the perplexity and toxicity.
+# However, when editing for harmfulness (where we don't have a scoring API), we instead measure GPT-4 win rate.
+if toxicity_task:
+    logging.info('Evaluating perplexity and toxicity...')
+    ppl, tox = evaluate_model(edited_model, tokenizer,
+                   return_perplexity=return_perplexity, return_toxicity=return_toxicity, display_gen=return_sample_generations)
+    logging.info(f'{model_id} - Perplexity: {ppl}, Toxicity: {tox}')
+
+else:
+    logging.info('Evaluating win-rate over the base model...')
+    model_1, _ = load_large_model(model_id)
+    win_rate = calculate_win_rate(model_1=model_1, model_2=edited_model, tokenizer=tokenizer,
+                                  dataset_name=harmful_dataset, harm_category=harm_category,
+                                  num_eval_dps=5, max_new_tokens=100)
+    logging.info(f'{model_id} - Win-rate: {win_rate}')

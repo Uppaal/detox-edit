@@ -23,7 +23,9 @@ def main(config_filename):
     dataset_dir = config.get('Filepaths', 'dataset_dir')
     hf_home = config.get('Filepaths', 'hf_home')
     seed = config.getint('GPUs', 'seed')
-    hf_token = config.get('Model', 'hf_token')
+    hf_token = config.get('Keys', 'hf_token').strip('').strip("")
+    azure_openai_endpoint = config.get('Keys', 'azure_openai_endpoint').strip('').strip("")
+    azure_openai_api_key = config.get('Keys', 'azure_openai_api_key').strip('').strip("")
 
     # Update or set environment variables
     python_path = os.environ.get("PYTHONPATH", "")
@@ -32,6 +34,8 @@ def main(config_filename):
     os.environ["DATASET_DIR"] = dataset_dir
     os.environ["HF_HOME"] = hf_home
     os.environ["HF_TOKEN"] = hf_token
+    os.environ["AZURE_OPENAI_ENDPOINT"] = azure_openai_endpoint
+    os.environ["AZURE_OPENAI_API_KEY"] = azure_openai_api_key
 
     print("PROJECT_ROOT:", os.environ.get("PROJECT_ROOT"))
     print("PYTHONPATH:", os.environ.get("PYTHONPATH"))

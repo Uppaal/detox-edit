@@ -17,6 +17,7 @@ MODEL_IDENITFIER = {
     'gpt2': 'gpt2-medium',
     'mistral': 'mistralai/Mistral-7B-v0.1',
     'zephyr-sft': 'HuggingFaceH4/mistral-7b-sft-beta',
+    'zephyr': 'HuggingFaceH4/zephyr-7b-beta',
     'gptj': 'EleutherAI/gpt-j-6B',
     'opt': 'facebook/opt-6.7b',
 }
