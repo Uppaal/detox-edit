@@ -69,11 +69,11 @@ python baselines/<baseline_of_your_choice>.py --config_file <name_of_config_file
 
 If you find our work useful, please cite our paper:
 ````
-@inproceedings{uppaal2024profs,
+@inproceedings{uppaal2025profs,
   title={Model editing as a robust and denoised variant of DPO: A case study on toxicity},
   author={Uppaal, Rheeya and Dey, Apratim and He, Yiting and Zhong, Yiqiao and Hu, Junjie},
   booktitle={The Thirteenth International Conference on Learning Representations 2025},
-  year={2024}
+  year={2025}
 }
 ````
 
