@@ -67,16 +67,16 @@ python baselines/<baseline_of_your_choice>.py --config_file <name_of_config_file
 
 ### Citation
 
-<!-- If you find our work useful, please cite our paper:
+If you find our work useful, please cite our paper:
 ````
-@article{uppaal2024detox,
-  title={DeTox: Toxic Subspace Projection for Model Editing},
+@inproceedings{uppaal2024profs,
+  title={Model editing as a robust and denoised variant of DPO: A case study on toxicity},
   author={Uppaal, Rheeya and Dey, Apratim and He, Yiting and Zhong, Yiqiao and Hu, Junjie},
-  journal={arXiv preprint arXiv:2405.13967},
+  booktitle={The Thirteenth International Conference on Learning Representations 2025},
   year={2024}
 }
 ````
- -->
+
 We use the preference and evaluation data from:
 ````
 @article{lee2024mechanistic,
