@@ -3,6 +3,9 @@
 data/
 outputs/
 plots/
+checkpoints/
+datasets/ 
+KTO/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
