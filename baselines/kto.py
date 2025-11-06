@@ -14,10 +14,9 @@ args = parser.parse_args()
 config_filename = args.config_file
 config = main(config_filename=config_filename)
 
-import json
 import logging
+from datasets import Dataset
 from trl import KTOConfig, KTOTrainer
-from datasets import Dataset, DatasetDict
 from utils.model_utils import load_large_model
 from evaluation.evaluate_model import evaluate_model
 from utils.dataset_utils import load_toxicity_preference
@@ -59,7 +58,7 @@ train_dataset = format_preference_to_kto_style(preferred_data[:num_dps], non_pre
 logging.info('Dataset created.')
 
 # Retrieve chat template
-_, tokenizer = load_large_model('zephyr') # This is Mistral's DPO version
+_, tokenizer = load_large_model('zephyr')  # This is Mistral's DPO version
 chat_template = tokenizer.chat_template
 
 # Load model

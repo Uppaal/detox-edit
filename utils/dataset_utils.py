@@ -3,6 +3,7 @@ import json
 import random
 import logging
 import numpy as np
+from detoxify import Detoxify
 from datasets import load_dataset as load_dataset_hf
 
 
@@ -11,13 +12,12 @@ def download_toxicity_preference(filedir):
     logging.info('Preference data not found. Downloading...')
     os.makedirs(filedir, exist_ok=True)
     url = 'https://drive.google.com/file/d/1BmBkhNS4R2z5UwqVu5GhaTvFFeWOJfPC/view?usp=drive_link'
-    os.system(f'gdown --id {url.split("/")[-2]} -O {filedir}/toxicity_pairwise.zip')  # Download file from google drive
+    os.system(f'gdown {url.split("/")[-2]} -O {filedir}/toxicity_pairwise.zip')  # Download file from google drive
     os.system(f'unzip {filedir}/toxicity_pairwise.zip -d {filedir}')  # Unzip the file
     os.system(f'rm {filedir}/toxicity_pairwise.zip')  # Delete the zip file
     os.system(f'mv {filedir}/toxicity_pairwise/* {filedir}')  # Move the files in the subdirectory to the parent directory
     os.system(f'rm -r {filedir}/toxicity_pairwise')  # Delete the subdirectory
     assert os.path.exists(filepath), 'Preference data download failed.'
-    logging.info('Done.')
 
 
 def reduce_num_dps(data, num_dps, random_dps):
@@ -51,7 +51,6 @@ def load_toxicity_preference(filedir, num_dps=-1, random_dps=True):
 
 
 def load_hh_golden_preference(num_dps=-1, random_dps=True):
-    from detoxify import Detoxify
     toxicity_scorer = Detoxify('original', device='cuda')
     raw_data = load_dataset_hf('nz/anthropic-hh-golden-rlhf')['train']
     num_shortlisted_dps = 0

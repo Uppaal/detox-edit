@@ -1,14 +1,17 @@
 import os
 import sys
+import time
+import torch
+import logging
 import inspect
+import numpy as np
+from tqdm import tqdm
+from copy import deepcopy
+
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
-import torch
-import logging
-import numpy as np
-from copy import deepcopy
 from utils.model_utils import (project_into_vocabluary, is_key, is_value,
                                get_lm_head, get_last_transformer_layer,
                                get_num_transformer_layers, get_hidden_dim, get_model_category)
@@ -71,44 +74,47 @@ class DeToxEdit():
         num_batches = inputs.input_ids.size(0) // batch_size
         sent_embs = []
 
-        for i in range(num_batches):
-            batch_input_ids = input_ids[i * batch_size: (i + 1) * batch_size]
-            batch_attention_mask = attention_mask[i * batch_size: (i + 1) * batch_size]
-            logging.info(f'Batch {i + 1}/{num_batches} of size {batch_input_ids.size(0)}')
+        with tqdm(total=num_batches, desc="Getting hidden sentence embeddings", file=sys.stderr) as pbar:
+            for i in range(num_batches):
+                batch_input_ids = input_ids[i * batch_size: (i + 1) * batch_size]
+                batch_attention_mask = attention_mask[i * batch_size: (i + 1) * batch_size]
 
-            with torch.no_grad():
-                outputs = self.model(input_ids=batch_input_ids, attention_mask=batch_attention_mask, output_hidden_states=True)
-                hidden_states = outputs.hidden_states  # Tuple of len L tensors: (N, seq_len, D)
-            del outputs
-            hidden_states = hidden_states[1:]  # Remove the input layer embeddings
-            hidden_states = torch.stack(hidden_states)  # (L, N, seq_len, D)
+                pbar.set_postfix({'batch_size': batch_input_ids.size(0)})
+                pbar.update(1)
 
-            last_layer = get_last_transformer_layer(self.model)
-            penultimate_layer_embedding = hidden_states[-2]  # (N, seq_len, D)
+                with torch.no_grad():
+                    outputs = self.model(input_ids=batch_input_ids, attention_mask=batch_attention_mask, output_hidden_states=True)
+                    hidden_states = outputs.hidden_states  # Tuple of len L tensors: (N, seq_len, D)
+                del outputs
+                hidden_states = hidden_states[1:]  # Remove the input layer embeddings
+                hidden_states = torch.stack(hidden_states)  # (L, N, seq_len, D)
 
-            if self.model_category in ['gpt2', 'mistral', 'opt']:
-                last_layer_emb = last_layer(penultimate_layer_embedding)[0]  # (N, seq_len, D)
-            elif self.model_category == 'llama':
-                inputs_embeds = self.model.model.embed_tokens(batch_input_ids)
-                past_seen_tokens = 0
-                cache_position = torch.arange(past_seen_tokens, past_seen_tokens + inputs_embeds.shape[1], device=inputs_embeds.device)
-                causal_mask = self.model.model._update_causal_mask(batch_attention_mask, inputs_embeds, cache_position, past_seen_tokens)
-                position_ids = cache_position.unsqueeze(0)
-                last_layer_emb = last_layer(
-                    penultimate_layer_embedding,
-                    attention_mask=causal_mask,
-                    position_ids=position_ids,
-                )[0]
-            elif self.model_category == 'gptj':
-                last_layer_emb = hidden_states[-1]
-            else:
-                raise NotImplementedError(f'Model category not recognized: {self.model_category}')
-            hidden_states[-1] = last_layer_emb
+                last_layer = get_last_transformer_layer(self.model)
+                penultimate_layer_embedding = hidden_states[-2]  # (N, seq_len, D)
 
-            hidden_sent_embs = torch.mean(hidden_states, dim=2)  # (L, N, D)
-            sent_embs.append(hidden_sent_embs.detach().to('cpu'))
-            del hidden_sent_embs, hidden_states
-            torch.cuda.empty_cache()
+                if self.model_category in ['gpt2', 'mistral', 'opt']:
+                    last_layer_emb = last_layer(penultimate_layer_embedding)[0]  # (N, seq_len, D)
+                elif self.model_category == 'llama':
+                    inputs_embeds = self.model.model.embed_tokens(batch_input_ids)
+                    past_seen_tokens = 0
+                    cache_position = torch.arange(past_seen_tokens, past_seen_tokens + inputs_embeds.shape[1], device=inputs_embeds.device)
+                    causal_mask = self.model.model._update_causal_mask(batch_attention_mask, inputs_embeds, cache_position, past_seen_tokens)
+                    position_ids = cache_position.unsqueeze(0)
+                    last_layer_emb = last_layer(
+                        penultimate_layer_embedding,
+                        attention_mask=causal_mask,
+                        position_ids=position_ids,
+                    )[0]
+                elif self.model_category == 'gptj':
+                    last_layer_emb = hidden_states[-1]
+                else:
+                    raise NotImplementedError(f'Model category not recognized: {self.model_category}')
+                hidden_states[-1] = last_layer_emb
+
+                hidden_sent_embs = torch.mean(hidden_states, dim=2)  # (L, N, D)
+                sent_embs.append(hidden_sent_embs.detach().to('cpu'))
+                del hidden_sent_embs, hidden_states
+                torch.cuda.empty_cache()
 
         # sent_embs is a list of tensors of shape (L, N, D). Concatenate them along the batch dimension
         hidden_sent_embs = torch.cat(sent_embs, dim=1)  # (L, N, D)
@@ -129,7 +135,7 @@ class DeToxEdit():
         del non_preferred_sent_embs
 
         if self.centering:
-            logging.info('Centering: Removing first singular vector from preference matrix.')
+            logging.info('Centering: by removing first singular vector from preference matrix.')
 
             for layer_num in range(preference_matrix.shape[0]):
                 d = preference_matrix[layer_num].to(torch.float32)
@@ -182,7 +188,6 @@ class DeToxEdit():
         for key in svd.keys():
             layer_num = int(key.split('.')[2])  # Format: transformer.h.19.mlp.c_fc.weight
             if layer_num not in self.edit_layer_range:
-                logging.info(f'Skipping layer {layer_num}')
                 continue
             logging.info(f'Calculating toxic subspace for: {key}')
 
@@ -256,15 +261,9 @@ class DeToxEdit():
 
     def apply_edit_end_to_end(self, edit_keys=True, edit_values=True, layer_range=None):
         # Measure speed and memory use
-        import time
-        import psutil
-        import pynvml
+        torch.cuda.synchronize()
+        torch.cuda.reset_peak_memory_stats()
         start_time = time.time()
-        before_memory = psutil.virtual_memory().used
-        pynvml.nvmlInit()
-        handle = pynvml.nvmlDeviceGetHandleByIndex(0)
-        info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-        before_gpu_memory_used = info.used
 
         # Find P_toxic
         self.setup_for_edits()
@@ -273,13 +272,11 @@ class DeToxEdit():
         edited_model = self.edit_model(self.toxic_subspace, edit_keys, edit_values, layer_range)
         torch.cuda.empty_cache()
 
+        torch.cuda.synchronize()
         end_time = time.time()
         time.sleep(1)
-        after_memory = psutil.virtual_memory().used
-        info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-        after_gpu_memory_used = info.used
-        print(f"Elapsed time: {end_time - start_time} seconds")
-        print(f"System Memory Used: {(after_memory - before_memory) / (1024 * 1024)} MB")
-        print(f"GPU Memory Used: {(after_gpu_memory_used - before_gpu_memory_used) / (1024 ** 2)} MB")
+        peak_gpu_mb = torch.cuda.max_memory_allocated() / (1024 ** 2)
+        logging.info(f"Elapsed time: {end_time - start_time:.2f} seconds")
+        logging.info(f"Peak GPU memory used: {peak_gpu_mb:.2f} MB")
 
         return edited_model

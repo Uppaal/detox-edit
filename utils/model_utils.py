@@ -35,7 +35,11 @@ def load_large_model(model_id, quantize=False, add_peft=False, hf_token=None):
     if hf_token is None:
         hf_token = os.environ['HF_TOKEN']
 
-    model_path = MODEL_IDENITFIER[model_id]
+    if model_id in MODEL_IDENITFIER.keys():
+        model_path = MODEL_IDENITFIER[model_id]
+    else:
+        model_path = os.path.join(os.environ['PROJECT_ROOT'], 'checkpoints', model_id)  # Loading a saved checkpoint with an arbitrary name
+
     dtype = torch.float32 if model_id == 'gpt2' else torch.float16
 
     tokenizer = AutoTokenizer.from_pretrained(model_path, model_max_length=512,
@@ -58,14 +62,14 @@ def load_large_model(model_id, quantize=False, add_peft=False, hf_token=None):
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
         device_map="auto",
-        torch_dtype=dtype,  # Non quantized weights are torch.float16 by default
+        dtype=dtype,    # Non quantized weights are torch.float16 by default
         cache_dir=os.path.join(os.environ['HF_HOME'], 'hub'),
         token=hf_token,
         quantization_config=quantization_config,
     )
 
     if add_peft:
-        model = prepare_model_for_kbit_training(model)  # preprocess the quantized model for training
+        model = prepare_model_for_kbit_training(model)  # Preprocess the quantized model for training
         peft_config = LoraConfig(
             lora_alpha=16,
             lora_dropout=0.1,

@@ -3,6 +3,7 @@ import sys
 import logging
 import inspect
 import argparse
+import numpy as np
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
@@ -10,12 +11,10 @@ sys.path.insert(0, parentdir)
 from utils.startup import main
 parser = argparse.ArgumentParser(description='DeTox')
 parser.add_argument('--config_file', default='gpt2-medium.ini', type=str, help='Config Filename. E.g. gpt2-medium.ini')
-
 args = parser.parse_args()
 config_filename = args.config_file
 config = main(config_filename=config_filename)
 
-import numpy as np
 from detox import DeToxEdit
 from utils.model_utils import load_large_model
 from evaluation.evaluate_model import evaluate_model
@@ -59,7 +58,6 @@ editor = DeToxEdit(model=model, tokenizer=tokenizer,
                         random_dps=True, toxicity_task=toxicity_task,
                         harmful_dataset=harmful_dataset, harm_category=harm_category,)
 edited_model = editor.apply_edit_end_to_end(edit_keys=edit_keys, edit_values=edit_values, layer_range=layer_range)
-
 
 # Save the edited model
 save_edited_model = config.getboolean('Model', 'save_edited_model')

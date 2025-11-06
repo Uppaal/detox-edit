@@ -86,6 +86,7 @@ def perplexity_over_dataset(model, tokenizer, text_samples):
     :param text_samples: List of strings
     :return: Perplexity, float
     """
+    model.config.loss_type = "ForCausalLMLoss"
     encodings = tokenizer("\n\n".join(text_samples), return_tensors="pt")
     ppl = perplexity(model=model, encodings=encodings)
     return ppl
@@ -105,7 +106,9 @@ def toxicity_over_dataset(model, tokenizer, text_samples):
 
     for prompt in tqdm(text_samples):
         input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(model.device)
-        response = model.generate(input_ids=input_ids, max_new_tokens=10, pad_token_id=tokenizer.pad_token_id)   # (1, response_len)
+        response = model.generate(input_ids=input_ids, max_new_tokens=10,
+                                  pad_token_id=tokenizer.pad_token_id,
+                                  attention_mask=torch.ones_like(input_ids).to(model.device))   # (1, response_len)
 
         # We only want to measure toxicity for the generation, excluding the prompt
         response = response[0, len(input_ids[0]):].tolist()  # (response_len, ) list
@@ -130,12 +133,15 @@ def display_generations(model, tokenizer, prompt_list, return_generations=False)
 
     model = model.to('cuda')
     generations = []
-
+    logging.info(f'Generating completions for {len(prompt_list)} prompts:')
     for str in prompt_list:
-        inputs = tokenizer(str, return_tensors="pt").input_ids.to(model.device)
-        outputs = model.generate(input_ids=inputs, max_new_tokens=10, pad_token_id=tokenizer.pad_token_id)
-        generations.append(tokenizer.decode(outputs[0], skip_special_tokens=True))
-        logging.info(f'\nPrompt: {str}\nGeneration:{generations[-1]}')
+        input_ids = tokenizer(str, return_tensors="pt").input_ids.to(model.device)
+        outputs = model.generate(input_ids=input_ids, max_new_tokens=10, pad_token_id=tokenizer.pad_token_id,
+                                 attention_mask=torch.ones_like(input_ids).to(model.device))
+        response = outputs[0, len(input_ids[0]):].tolist()
+        generations.append(tokenizer.decode(response, skip_special_tokens=True).strip())
+        print(f'\nPROMPT: {str}\nCOMPLETION: {generations[-1]}')
+
     if return_generations:
         return generations
 
@@ -162,7 +168,7 @@ def evaluate_model(model, tokenizer, return_toxicity=True, return_perplexity=Tru
         filedir = os.path.join(os.environ["DATASET_DIR"], 'evaluation')
         os.makedirs(filedir, exist_ok=True)
         url = 'https://drive.google.com/file/d/1Sj4Mzpmh8KoYLfHUeFtmXxFTZNOQU30D/view?usp=drive_link'
-        os.system(f'gdown --id {url.split("/")[-2]} -O {filedir}/intervene_data.zip')   # Download file from google drive
+        os.system(f'gdown {url.split("/")[-2]} -O {filedir}/intervene_data.zip')        # Download file from google drive
         os.system(f'unzip {filedir}/intervene_data.zip -d {filedir}')                   # Unzip the file
         os.system(f'rm {filedir}/intervene_data.zip')                                   # Delete the zip file
         os.system(f'mv {filedir}/intervene_data/* {filedir}')  # Move the files in the subdirectory to the parent directory
