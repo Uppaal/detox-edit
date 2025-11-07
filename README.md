@@ -1,5 +1,5 @@
 <h1 align="center">Projection Filter on Subspaces: Editing for Toxicity and Safety</h1>
-<br>
+
 <p align="center">
   <a href="https://arxiv.org/abs/2405.13967">
     <img src="https://img.shields.io/badge/arXiv-2405.13967-B31B1B?logo=arxiv&logoColor=white" alt="arXiv">
