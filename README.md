@@ -31,16 +31,13 @@ If you would like to use our edited models without having to run our code, you c
 
 | Base Model                                                                 | Edited for | Checkpoint                                                       |
 |----------------------------------------------------------------------------|------------|------------------------------------------------------------------|
-| [GPT-2 Medium](https://huggingface.co/openai-community/gpt2-medium)        | Toxicity   | [Link](https://huggingface.co/Uppaal/gpt2-medium-ProFS-toxicity) |
-| [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6b)                     | Toxicity   | [Link](https://huggingface.co/Uppaal/gpt-j-6B-ProFS-toxicity)    |
-| [OPT 6.7B](https://huggingface.co/facebook/opt-6.7b)                                                               | Toxicity   | [Link](https://huggingface.co/Uppaal/opt-6.7b-ProFS-toxicity)    |
-
-[//]: # (| [Mistal 7B]&#40;https://huggingface.co/mistralai/Mistral-7B-v0.1&#41;              | Toxicity   | |)
-
-[//]: # (| [Mistral-SFT 7B]&#40;https://huggingface.co/HuggingFaceH4/mistral-7b-sft-beta&#41; | Toxicity   |)
-
-[//]: # (|                                                                            | Safety     |)
-
+| [GPT-2 Medium](https://huggingface.co/openai-community/gpt2-medium)        | Toxicity   | [Link](https://huggingface.co/Uppaal/gpt2-ProFS-toxicity)        |
+| [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6b)                     | Toxicity   | [Link](https://huggingface.co/Uppaal/gpt-j-ProFS-toxicity)       |
+| [OPT 6.7B](https://huggingface.co/facebook/opt-6.7b)                       | Toxicity   | [Link](https://huggingface.co/Uppaal/opt-ProFS-toxicity)         |
+| [Mistal 7B](https://huggingface.co/mistralai/Mistral-7B-v0.1)              | Toxicity   | [Link](https://huggingface.co/Uppaal/Mistral-ProFS-toxicity)     |
+| [Mistral-SFT 7B](https://huggingface.co/HuggingFaceH4/mistral-7b-sft-beta) | Toxicity   | [Link](https://huggingface.co/Uppaal/Mistral-sft-ProFS-toxicity)|
+| [Mistal 7B](https://huggingface.co/mistralai/Mistral-7B-v0.1)              | Safety     | [Link](https://huggingface.co/Uppaal/Mistral-ProFS-safety)                                                         |
+| [Mistral-SFT 7B](https://huggingface.co/HuggingFaceH4/mistral-7b-sft-beta) | Safety     | [Link](https://huggingface.co/Uppaal/Mistral-sft-ProFS-safety)                                                         |
 
 ## Using this Codebase
 
