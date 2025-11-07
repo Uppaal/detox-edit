@@ -7,6 +7,7 @@ import inspect
 import numpy as np
 from tqdm import tqdm
 from copy import deepcopy
+from transformers.masking_utils import create_causal_mask, create_sliding_window_causal_mask
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -78,9 +79,7 @@ class DeToxEdit():
             for i in range(num_batches):
                 batch_input_ids = input_ids[i * batch_size: (i + 1) * batch_size]
                 batch_attention_mask = attention_mask[i * batch_size: (i + 1) * batch_size]
-
                 pbar.set_postfix({'batch_size': batch_input_ids.size(0)})
-                pbar.update(1)
 
                 with torch.no_grad():
                     outputs = self.model(input_ids=batch_input_ids, attention_mask=batch_attention_mask, output_hidden_states=True)
@@ -92,8 +91,28 @@ class DeToxEdit():
                 last_layer = get_last_transformer_layer(self.model)
                 penultimate_layer_embedding = hidden_states[-2]  # (N, seq_len, D)
 
-                if self.model_category in ['gpt2', 'mistral', 'opt']:
+                if self.model_category in ['gpt2', 'opt']:
                     last_layer_emb = last_layer(penultimate_layer_embedding)[0]  # (N, seq_len, D)
+                elif self.model_category == 'mistral':
+                    inputs_embeds = self.model.model.embed_tokens(batch_input_ids)
+                    device = inputs_embeds.device
+                    seq_len = inputs_embeds.shape[1]
+                    past_seen_tokens = 0
+                    cache_position = torch.arange(past_seen_tokens, past_seen_tokens + seq_len, device=device)
+                    position_ids = cache_position.unsqueeze(0)
+                    cfg = self.model.model.config
+                    mask_fn = create_causal_mask if getattr(cfg, "sliding_window", None) is None else create_sliding_window_causal_mask
+                    causal_mask = mask_fn(config=cfg, input_embeds=inputs_embeds, attention_mask=batch_attention_mask,
+                        cache_position=cache_position, past_key_values=None, position_ids=position_ids)
+                    position_embeddings = self.model.model.rotary_emb(inputs_embeds, position_ids)
+                    last_layer_emb = last_layer(
+                        penultimate_layer_embedding,
+                        attention_mask=causal_mask,
+                        position_ids=position_ids,
+                        cache_position=cache_position,
+                        position_embeddings=position_embeddings,
+                        use_cache=False,
+                    )[0]
                 elif self.model_category == 'llama':
                     inputs_embeds = self.model.model.embed_tokens(batch_input_ids)
                     past_seen_tokens = 0
@@ -115,6 +134,7 @@ class DeToxEdit():
                 sent_embs.append(hidden_sent_embs.detach().to('cpu'))
                 del hidden_sent_embs, hidden_states
                 torch.cuda.empty_cache()
+                pbar.update(1)
 
         # sent_embs is a list of tensors of shape (L, N, D). Concatenate them along the batch dimension
         hidden_sent_embs = torch.cat(sent_embs, dim=1)  # (L, N, D)
@@ -280,3 +300,4 @@ class DeToxEdit():
         logging.info(f"Peak GPU memory used: {peak_gpu_mb:.2f} MB")
 
         return edited_model
+

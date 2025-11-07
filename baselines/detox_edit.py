@@ -59,6 +59,7 @@ editor = DeToxEdit(model=model, tokenizer=tokenizer,
                         harmful_dataset=harmful_dataset, harm_category=harm_category,)
 edited_model = editor.apply_edit_end_to_end(edit_keys=edit_keys, edit_values=edit_values, layer_range=layer_range)
 
+
 # Save the edited model
 save_edited_model = config.getboolean('Model', 'save_edited_model')
 if save_edited_model:
@@ -81,8 +82,8 @@ if toxicity_task:
 
 else:
     logging.info('Evaluating win-rate over the base model...')
-    model_1, _ = load_large_model(model_id)
-    win_rate = calculate_win_rate(model_1=model_1, model_2=edited_model, tokenizer=tokenizer,
+    win_rate = calculate_win_rate(model_1_id=model_id, model_2=edited_model, tokenizer=tokenizer,
                                   dataset_name=harmful_dataset, harm_category=harm_category,
-                                  num_eval_dps=5, max_new_tokens=100)
+                                  num_eval_dps=200, max_new_tokens=100)
     logging.info(f'{model_id} - Win-rate: {win_rate}')
+

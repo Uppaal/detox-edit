@@ -75,7 +75,7 @@ def get_continuation(prompts, model, tokenizer, max_new_tokens=100):
     return continuations
 
 
-def calculate_win_rate(model_1_id, model_2_id, dataset_name, num_eval_dps, max_new_tokens=100, harm_category=None):
+def calculate_win_rate(dataset_name, model_1_id=None, model_2_id=None, model_1=None, model_2=None, tokenizer=None, num_eval_dps=500, max_new_tokens=100, harm_category=None):
 
     # Load challenge prompts
     if dataset_name == 'Safe-RLHF':
@@ -85,12 +85,18 @@ def calculate_win_rate(model_1_id, model_2_id, dataset_name, num_eval_dps, max_n
     else:
         raise ValueError(f'Dataset {dataset_name} not supported. Must be one of Safe-RLHF, HH-Golden')
 
-    model_1, tokenizer = load_large_model(model_1_id)
+    if model_1 is None:
+        model_1, tokenizer = load_large_model(model_1_id)
+    else:
+        assert tokenizer is not None
     continuations_1 = get_continuation(challenge_prompts, model_1.cpu().to("cuda:0"), tokenizer, max_new_tokens=max_new_tokens)
     logging.info(f'Model 1 continuations done.')
-    del model_1, tokenizer  # Free up memory
+    del model_1
 
-    model_2, tokenizer = load_large_model(model_2_id)
+    if model_2 is None:
+        model_2, tokenizer = load_large_model(model_2_id)
+    else:
+        assert tokenizer is not None
     continuations_2 = get_continuation(challenge_prompts, model_2.cpu().to("cuda:0"), tokenizer, max_new_tokens=max_new_tokens)
     logging.info(f'Model 2 continuations done.')
     del model_2, tokenizer
