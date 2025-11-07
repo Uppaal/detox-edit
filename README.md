@@ -1,39 +1,16 @@
-<h1 style="text-align:center;">Projection Filter on Subspaces: Editing for Toxicity and Safety</h1>
-
-<style>
-.button-group {margin-top: 2.5em; text-align: center;}
-.button {
-  display: inline-flex;            /* side-by-side layout */
-  align-items: center;             /* vertically center icon + text */
-  gap: 10px;                       /* space between icon and text */
-  background-color: #333;
-  color: #fff;
-  border-radius: 40px;             /* smooth pill shape */
-  padding: 10px 20px;
-  font-size: 1em;
-  text-decoration: none;
-  transition: background 0.2s ease;
-}
-.button-arxiv:hover { background-color: #B31B1B; color: #FFFFFF}
-.button-huggingface:hover { background-color: #f1c232; color: #FFFFFF}
-.button-blog:hover { background-color: #1DA1F2; color: #FFFFFF}
-</style>
-
-<div class="button-group">
-  <a class="button button-arxiv" href="https://arxiv.org/abs/2405.13967">
-      <img src="assets/arxiv-logo.svg" width="30" height="30" loading="lazy" decoding="async">
-      <span>arXiv</span>
+<h1 align="center">Projection Filter on Subspaces: Editing for Toxicity and Safety</h1>
+<br>
+<p align="center">
+  <a href="https://arxiv.org/abs/2405.13967">
+    <img src="https://img.shields.io/badge/arXiv-2405.13967-B31B1B?logo=arxiv&logoColor=white" alt="arXiv">
   </a>
-  <a class="button button-blog" href="https://uppaal.github.io/projects/profs/profs.html">
-      <img src="assets/web-logo.svg" width="30" height="30" loading="lazy" decoding="async">
-      <span>Project Webpage</span>
+  <a href="https://uppaal.github.io/projects/profs/profs.html">
+    <img src="https://img.shields.io/badge/Project_Webpage-1DA1F2?logo=google-chrome&logoColor=white&color=0A4D8C" alt="Project Webpage">
   </a>
-  <a class="button button-huggingface" href="https://huggingface.co/collections/Uppaal/profs">
-      <img src="assets/hf-logo.svg" width="30" height="30" loading="lazy" decoding="async">
-      <span>Checkpoints</span>
+  <a href="https://huggingface.co/collections/Uppaal/profs">
+    <img src="https://img.shields.io/badge/Checkpoints-F1C232?logo=huggingface&logoColor=white&color=BFA000" alt="Checkpoints">
   </a>
-</div>
-
+</p>
 
 ## Paper
 This repository provides the implementation and checkpoints used in [Model Editing as a Robust and Denoised variant of DPO: A Case Study on Toxicity](https://arxiv.org/abs/2405.13967) (ICLR 2025). 
@@ -41,8 +18,8 @@ You may also find an earlier version of this paper titled [DeTox: Toxic Subspace
 
 
 
-<p style="text-align:center;">
-<img src="assets/ProFS%20Method.png" alt="drawing" width="900"><br>
+<p align="center">
+<img src="assets/ProFS%20Method.png" alt="drawing" width="800"><br>
 <i><b>Figure.</b> 
 Schematic of ProFS (previously called DeTox). Toxic directions (in red) are projected out of the model’s MLP-value matrices, leaving other representational directions intact. </i>
 </p>
